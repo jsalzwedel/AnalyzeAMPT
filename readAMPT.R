@@ -11,9 +11,9 @@ GetData <- function(file, skip, nrows, nevent) {
 
 # How many rows to skip for each event, and how many to read in
 filename <- "ampt.dat"
-nSkip <- c(1, 29452, 59407, 87393)
-nRows <- c(29450, 29954, 27985, 28546)
-nEvent <- c(1, 2, 3, 4)
+nSkip <- c(1, 29452, 59407, 87393, 115940)
+nRows <- c(29450, 29954, 27985, 28546, 29861)
+nEvent <- c(1, 2, 3, 4, 5)
 
 # Read in the data
 ampt <- GetData(filename, nSkip[1], nRows[1], nEvent[1])
@@ -37,9 +37,16 @@ AddColumns <- function(data) {
 
 ampt <- AddColumns(ampt)
 
-# Find lambdas
+# Find particles that pass PDG, eta, and rho cuts
+GetParticles <- function(data, thisPDG, etaMin = -0.8, etaMax = 0.8, rho = 10^2) {
+    tmp <- data[data$PDG == thisPDG]
+    tmp <- tmp[tmp$Eta > etaMin]
+    tmp <- tmp[tmp$Eta < etaMax]
+    tmp <- tmp[tmp$Rho < rho]
+    tmp
+}
 
-#lambdas <- ampt[ampt$PDG == 3122]
-#antilambdas <- ampt[ampt$PDG == -3122]
+# Find midrapidity lambdas (throw away obvious secondaries)
+lambdas <- GetParticles(ampt, thisPDG = 3122)
+antilambdas <- GetParticles(ampt, thisPDG = -3122)
 
-# Throw away the obvious secondaries
