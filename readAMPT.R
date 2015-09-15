@@ -13,7 +13,7 @@ GetData <- function(file, skip, nrows, nevent) {
 filename <- "ampt.dat"
 nSkip <- c(1, 29452, 59407, 87393, 115940)
 nRows <- c(29450, 29954, 27985, 28546, 29861)
-nEvent <- c(1, 2, 3, 4, 5)
+nEvent <- c(1:5)
 
 # Read in the data
 ampt <- GetData(filename, nSkip[1], nRows[1], nEvent[1])
@@ -49,4 +49,29 @@ GetParticles <- function(data, thisPDG, etaMin = -0.8, etaMax = 0.8, rho = 10^2)
 # Find midrapidity lambdas (throw away obvious secondaries)
 lambdas <- GetParticles(ampt, thisPDG = 3122)
 antilambdas <- GetParticles(ampt, thisPDG = -3122)
+v0s <- rbind(lambdas,antilambdas)
+# Now lets make Delta R distributions
+
+
+# For some subset of values, take the difference between each value
+DiffIdentical <- function(vals) {
+    diffMatrix <- sapply(vals, function(x) x - vals)
+    diffs <- diffMatrix[upper.tri(diffMatrix)]
+}
+
+# Split the lambda X distribution up by event, then take the differences in X
+splitLambdas <- with(lambdas, split(X,Event))
+splitLambdaDiffs <- sapply(splitLambdas, DiffIdentical)
+xDiffsCombined <- unlist(splitLambdaDiffs, use.names=FALSE)
+
+# Try doing it to non-identical particles
+DiffNonIdentical <- function(vals1, vals2) {
+    diffMatrix <- sapply(vals1, function(x) x - vals2)
+}
+
+xDiffMixed <- DiffNonIdentical(lambdas$X,antilambdas$X)
+
+
+
+
 
