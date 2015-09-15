@@ -60,16 +60,33 @@ DiffIdentical <- function(vals) {
 }
 
 # Split the lambda X distribution up by event, then take the differences in X
-splitLambdas <- with(lambdas, split(X,Event))
-splitLambdaDiffs <- sapply(splitLambdas, DiffIdentical)
-xDiffsCombined <- unlist(splitLambdaDiffs, use.names=FALSE)
+GetDiffsByEventForColumn <- function(data, column) {
+    splitData <- with(data, split(column, Event))
+    splitDataDiffs <- sapply(splitData, DiffIdentical)
+    diffsCombined <- unlist(splitDataDiffs, use.names=FALSE)
+}
 
-# Try doing it to non-identical particles
+GetDeltaRTable <- function(data) {
+    xDiffs <- GetDiffsByEventForColumn(data,data$X)
+    yDiffs <- GetDiffsByEventForColumn(data,data$Y)
+    zDiffs <- GetDiffsByEventForColumn(data,data$Z)
+    dframe <- cbind(xDiffs,yDiffs,zDiffs)
+    as.data.table(dframe)
+}
+
+deltaRLambdas <- GetDeltaRTable(lambdas)
+deltaRAntilambdas <- GetDeltaRTable(antilambdas)
+
+
+# Try doing it to non-identical particles.  Here, we need to mix between species
 DiffNonIdentical <- function(vals1, vals2) {
     diffMatrix <- sapply(vals1, function(x) x - vals2)
 }
 
-xDiffMixed <- DiffNonIdentical(lambdas$X,antilambdas$X)
+
+
+
+#xDiffMixed <- DiffNonIdentical(lambdas$X,antilambdas$X)
 
 
 
