@@ -1,9 +1,11 @@
+# Let's plot the data in various ways
+
 data <- read.csv("DeltaR.csv", row.names=1)
 
 library(data.table)
 data <- as.data.table(data)
 
-stripped <- data[,c("deltaR","pairType", "EvType"), with=FALSE]
+#stripped <- data[,c("deltaR","pairType", "EvType"), with=FALSE]
 
 
 GetDensityRatio <- function(data, type) {
@@ -13,7 +15,6 @@ GetDensityRatio <- function(data, type) {
     mixD <- density(data$deltaR[data$EvType == "Mixed"],
                      from= 0, to = 100, adjust = 2)
     ratio <- sameD$y/mixD$y
-    #plot(x=sameD$x, y=ratio) 
     ratioD <- mixD
     ratioD$y <- ratio
     
@@ -24,7 +25,7 @@ laD <- GetDensityRatio(data, "LA")
 llD <- GetDensityRatio(data, "LL")
 aaD <- GetDensityRatio(data, "AA")
 
-plot(laD$Ratio)
+plot(aaD$Ratio)
 
 # Now write a function that calculates error bars
 
@@ -37,6 +38,13 @@ GetErrorBars <- function(hists) {
     fractionalErr <- sqrt(numInverseCounts + denInverseCounts)
     errBar <- fractionalErr * hists$Ratio$density
 }
+
+
+############
+# Try passing a column name (deltaR, deltaX, whatever) directly
+# Then use data[,column, with = FALSE]
+###########
+
 
 MakeHistograms <- function(data, type) {
     theData <- data[data$pairType == type]
@@ -86,9 +94,7 @@ MakeErrPlot <- function(hists) {
     limits <- aes(ymax = y+errs, ymin = y-errs)
     ggplot(dat, aes(x=x, y=y)) +
         geom_errorbar(limits) +
-        geom_point() +
-    
-    #qplot(x, y) 
+        geom_point()
 }
 
 MakeErrPlot(llHists)
@@ -102,12 +108,13 @@ MakeErrPlotFromDT <- function(histDT) {
     ggplot(histDT, aes(x=DeltaR, y=CF, color = Type)) +
         geom_errorbar(aes(ymin = CF-Errs, ymax = CF+Errs)) +
         geom_point() +
-        geom_line() +
+        #geom_line() +
         facet_wrap(~Type, nrow=1) +
         xlab(expression(paste(Delta,"R"))) +
-        ylab(expression(paste("CF(",Delta,"R)")))
+        ylab(expression(paste("CF(",Delta,"R)"))) +
+        coord_cartesian(ylim = c(0,2))
 }
 
-MakeErrPlotFromDT(histDT)
+panels <- MakeErrPlotFromDT(histDT)
 
 
