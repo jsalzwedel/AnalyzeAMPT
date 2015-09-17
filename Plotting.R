@@ -52,6 +52,7 @@ MakeHistograms <- function(data, type) {
     hists <- list(Same = histSame, Mix = histMixed, Ratio = histRatio)
     errs <- GetErrorBars(hists)
     hists$Errs <- errs
+    hists$Type <- type
     hists
 }
 
@@ -59,16 +60,54 @@ llHists <- MakeHistograms(data, "LL")
 aaHists <- MakeHistograms(data, "AA")
 laHists <- MakeHistograms(data, "LA")
 
+MakeHistDataTable <- function(data) {
+    dt <- data.table(DeltaR = data$Ratio$mids,
+                CF = data$Ratio$density,
+                Errs = data$Errs,
+                Type = data$Type)
+}
+
+histDT <- rbind(MakeHistDataTable(llHists),
+                MakeHistDataTable(aaHists),
+                MakeHistDataTable(laHists))
+
 # Then plot
 
+library(Hmisc) # Used for errbar function
+library(ggplot2)
 MakeErrPlot <- function(hists) {
-    DeltaR <- hists$Ratio$mids
-    CF <- hists$Ratio$density
+    x <- hists$Ratio$mids
+    y <- hists$Ratio$density
     errs <- hists$Errs
-    errbar(DeltaR, CF, CF + errs, CF - errs  )
+    #errbar(DeltaR, CF, CF + errs, CF - errs  )
+    
+    dat <- data.table(x,y,errs)
+    
+    limits <- aes(ymax = y+errs, ymin = y-errs)
+    ggplot(dat, aes(x=x, y=y)) +
+        geom_errorbar(limits) +
+        geom_point() +
+    
+    #qplot(x, y) 
 }
-# errbar(xpoints, ypoint, yplus, yminus)
-library(Hmisc)
+
 MakeErrPlot(llHists)
 MakeErrPlot(aaHists)
 MakeErrPlot(laHists)
+
+# Try plotting these side by side
+
+MakeErrPlotFromDT <- function(histDT) {
+#    limits <- aes(ymax = y+errs, ymin = y-errs)
+    ggplot(histDT, aes(x=DeltaR, y=CF, color = Type)) +
+        geom_errorbar(aes(ymin = CF-Errs, ymax = CF+Errs)) +
+        geom_point() +
+        geom_line() +
+        facet_wrap(~Type, nrow=1) +
+        xlab(expression(paste(Delta,"R"))) +
+        ylab(expression(paste("CF(",Delta,"R)")))
+}
+
+MakeErrPlotFromDT(histDT)
+
+
