@@ -35,8 +35,7 @@ GetDeltaRTable <- function(data, pairType) {
     yDiffs <- GetDiffsByEventForColumn(data,data$Y)
     zDiffs <- GetDiffsByEventForColumn(data,data$Z)
     deltaR <- sqrt(xDiffs^2 + yDiffs^2 + zDiffs^2)
-    dframe <- cbind(xDiffs,yDiffs,zDiffs, deltaR, pairType, EvType = "Same")
-    as.data.table(dframe)
+    dt <- data.table(xDiffs,yDiffs,zDiffs, deltaR, pairType, EvType = "Same")
 }
 
 llSame <- GetDeltaRTable(lambdas, "LL")
@@ -65,8 +64,7 @@ GetDeltaRTableNotID <- function(pairType) {
     zDiffs <- GetDiffsByEventForColumnNotID(lambdas, lambdas$Z, 
                                            antilambdas, antilambdas$Z)
     deltaR <- sqrt(xDiffs^2 + yDiffs^2 + zDiffs^2)
-    dframe <- cbind(xDiffs,yDiffs,zDiffs, deltaR, pairType, EvType = "Same")
-    as.data.table(dframe)
+    dt <- data.table(xDiffs,yDiffs,zDiffs, deltaR, pairType, EvType = "Same")
 }
 
 laSame <- GetDeltaRTableNotID("LA")
@@ -92,12 +90,11 @@ GetDiffsMixedEvent <- function(data, column, data2, data2column) {
 
 
 DoMixing <- function(data1, data2, pairType) {
-    xDiffs <- GetDiffsMixedEvent(data1, data1$Y, data2, data2$Y)
+    xDiffs <- GetDiffsMixedEvent(data1, data1$X, data2, data2$X)
     yDiffs <- GetDiffsMixedEvent(data1, data1$Y, data2, data2$Y)
-    zDiffs <- GetDiffsMixedEvent(data1, data1$Y, data2, data2$Y)
+    zDiffs <- GetDiffsMixedEvent(data1, data1$Z, data2, data2$Z)
     deltaR <- sqrt(xDiffs^2 + yDiffs^2 + zDiffs^2)
-    dframe <- cbind(xDiffs,yDiffs,zDiffs, deltaR, pairType, EvType = "Mixed")
-    as.data.table(dframe)
+    dframe <- data.table(xDiffs,yDiffs,zDiffs, deltaR, pairType, EvType = "Mixed")
 }
 
 llMix <- DoMixing(lambdas,lambdas, "LL")
@@ -110,23 +107,22 @@ write.csv(combined, "DeltaR.csv")
 # Compute mean, standard deviation, and standard error
 se <- function(x) sqrt(var(x)/length(x))
 
-MakeResultsTable <- function(ll, aa, la) {
-    results <- data.table(
-        PairType = c(ll$pairType, aa$pairType, la$pairType),
-        MeanDeltaR = c(mean(ll$deltaR), 
-                       mean(aa$deltaR),
-                       mean(la$deltaR)),
-        Std = c(sd(ll$deltaR), 
-                sd(aa$deltaR),
-                sd(la$deltaR)),
-        StdErr = c(se(ll$deltaR), 
-                   se(aa$deltaR),
-                   se(la$deltaR))              
-    )   
+MakeResultsTable <- function(data) {
+    results <- data.table(MeanDeltaR = mean(data$deltaR),
+                          StdErr = se(data$deltaR),
+                          Std = sd(data$deltaR),
+                          PairType = data$pairType[1],
+                          EvType = data$EvType[1]
+                          )
+                          
 }
 
-resultsSame <- MakeResultsTable(llSame, aaSame, laSame)
-resultsMixed <- MakeResultsTable(llMix, aaMix, laMix)
+combinedSummary <- rbind(MakeResultsTable(llSame),
+                         MakeResultsTable(aaSame),
+                         MakeResultsTable(laSame),
+                         MakeResultsTable(llMix),
+                         MakeResultsTable(aaMix),
+                         MakeResultsTable(laMix))
 
 
 # Exploratory plotting
@@ -135,14 +131,3 @@ pairs(lambdasXYZ)
 antiXYZ <- antilambdas[,intersect(colnames(lambdas), c("X","Y","Z")), with=FALSE]
 pairs(antiXYZ)
 
-
-
-# Let's make density functions (histograms) for the deltaR distributions
-sameD <- density(laSame$deltaR, from= 0, to = 100, n = 64)
-mixD <- density(laMix$deltaR, from= 0, to = 100, n = 64)
-
-plot(sameD)
-plot(mixD)
-ratio <- sameD$y/mixD$y
-plot(x=sameD$x, y=ratio) 
-# It would be good to get error bars on this
