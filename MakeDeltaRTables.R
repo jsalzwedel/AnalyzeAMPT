@@ -30,17 +30,17 @@ GetDiffsByEventForColumn <- function(data, column) {
     diffsCombined <- unlist(splitDataDiffs, use.names=FALSE)
 }
 
-GetDeltaRTable <- function(data) {
+GetDeltaRTable <- function(data, pairType) {
     xDiffs <- GetDiffsByEventForColumn(data,data$X)
     yDiffs <- GetDiffsByEventForColumn(data,data$Y)
     zDiffs <- GetDiffsByEventForColumn(data,data$Z)
     deltaR <- sqrt(xDiffs^2 + yDiffs^2 + zDiffs^2)
-    dframe <- cbind(xDiffs,yDiffs,zDiffs, deltaR)
+    dframe <- cbind(xDiffs,yDiffs,zDiffs, deltaR, pairType, EvType = "Same")
     as.data.table(dframe)
 }
 
-llSame <- GetDeltaRTable(lambdas)
-aaSame <- GetDeltaRTable(antilambdas)
+llSame <- GetDeltaRTable(lambdas, "LL")
+aaSame <- GetDeltaRTable(antilambdas, "AA")
 
 
 
@@ -57,7 +57,7 @@ GetDiffsByEventForColumnNotID <- function(data, column, data2, data2column) {
     diffsCombined <- unlist(splitDataDiffs, use.names=FALSE)
 }
 
-GetDeltaRTableNotID <- function() {
+GetDeltaRTableNotID <- function(pairType) {
     xDiffs <- GetDiffsByEventForColumnNotID(lambdas, lambdas$X, 
                                            antilambdas, antilambdas$X)
     yDiffs <- GetDiffsByEventForColumnNotID(lambdas, lambdas$Y, 
@@ -65,11 +65,11 @@ GetDeltaRTableNotID <- function() {
     zDiffs <- GetDiffsByEventForColumnNotID(lambdas, lambdas$Z, 
                                            antilambdas, antilambdas$Z)
     deltaR <- sqrt(xDiffs^2 + yDiffs^2 + zDiffs^2)
-    dframe <- cbind(xDiffs,yDiffs,zDiffs, deltaR)
+    dframe <- cbind(xDiffs,yDiffs,zDiffs, deltaR, pairType, EvType = "Same")
     as.data.table(dframe)
 }
 
-laSame <- GetDeltaRTableNotID()
+laSame <- GetDeltaRTableNotID("LA")
 
 
 
@@ -91,26 +91,28 @@ GetDiffsMixedEvent <- function(data, column, data2, data2column) {
 }
 
 
-DoMixing <- function(data1, data2) {
+DoMixing <- function(data1, data2, pairType) {
     xDiffs <- GetDiffsMixedEvent(data1, data1$Y, data2, data2$Y)
     yDiffs <- GetDiffsMixedEvent(data1, data1$Y, data2, data2$Y)
     zDiffs <- GetDiffsMixedEvent(data1, data1$Y, data2, data2$Y)
     deltaR <- sqrt(xDiffs^2 + yDiffs^2 + zDiffs^2)
-    dframe <- cbind(xDiffs,yDiffs,zDiffs, deltaR)
+    dframe <- cbind(xDiffs,yDiffs,zDiffs, deltaR, pairType, EvType = "Mixed")
     as.data.table(dframe)
 }
 
-llMix <- DoMixing(lambdas,lambdas)
-aaMix <- DoMixing(antilambdas,antilambdas)
-laMix <- DoMixing(lambdas, antilambdas)
+llMix <- DoMixing(lambdas,lambdas, "LL")
+aaMix <- DoMixing(antilambdas,antilambdas, "AA")
+laMix <- DoMixing(lambdas, antilambdas, "LA")
 
+combined <- rbind(llSame, aaSame, laSame, llMix, aaMix, laMix)
+write.csv(combined, "DeltaR.csv")
 
 # Compute mean, standard deviation, and standard error
 se <- function(x) sqrt(var(x)/length(x))
 
 MakeResultsTable <- function(ll, aa, la) {
     results <- data.table(
-        PDG = c(3122, -3122, 0),
+        PairType = c(ll$pairType, aa$pairType, la$pairType),
         MeanDeltaR = c(mean(ll$deltaR), 
                        mean(aa$deltaR),
                        mean(la$deltaR)),
@@ -136,8 +138,8 @@ pairs(antiXYZ)
 
 
 # Let's make density functions (histograms) for the deltaR distributions
-sameD <- density(llSame$deltaR, from= 0, to = 150)
-mixD <- density(llMix$deltaR, from= 0, to = 150)
+sameD <- density(laSame$deltaR, from= 0, to = 100, n = 64)
+mixD <- density(laMix$deltaR, from= 0, to = 100, n = 64)
 
 plot(sameD)
 plot(mixD)
