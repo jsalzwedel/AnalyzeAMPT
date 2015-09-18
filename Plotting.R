@@ -1,9 +1,8 @@
 # Let's plot the data in various ways
-
-data <- read.csv("DeltaR.csv", row.names=1)
-
 library(data.table)
-data <- as.data.table(data)
+data <- as.data.table(read.csv("DeltaR.csv", row.names=1))
+
+datapp <- as.data.table(read.csv("DeltaRProts.csv", row.names=1))
 
 GetDensityRatio <- function(data, type) {
     data <- data[data$pairType == type]
@@ -76,10 +75,13 @@ MakeHistDataTable <- function(data) {
                 Type = data$Type)
 }
 
-MakeAllDT <- function(data, var, rmin, rmax) {   
-    llHists <- MakeHistograms(data, "LL", var, rmin, rmax)
-    aaHists <- MakeHistograms(data, "AA", var, rmin, rmax)
-    laHists <- MakeHistograms(data, "LA", var, rmin, rmax)
+MakeAllDT <- function(data, var, rmin, rmax, isLL=TRUE) {   
+    types <- character()
+    if(isLL) types <- c("LL","AA","LA")
+    else types <- c("PP","ApAp","PAp")
+    llHists <- MakeHistograms(data, types[1], var, rmin, rmax)
+    aaHists <- MakeHistograms(data, types[2], var, rmin, rmax)
+    laHists <- MakeHistograms(data, types[3], var, rmin, rmax)
     
     histDT <- rbind(MakeHistDataTable(llHists),
                     MakeHistDataTable(aaHists),
@@ -90,6 +92,10 @@ MakeAllDT <- function(data, var, rmin, rmax) {
 deltaRHists <- MakeAllDT(data,"deltaR", 0, 100)
 deltaRtHists <- MakeAllDT(data,"deltaRt", 0, 100)
 deltaZHists <- MakeAllDT(data,"zDiffs", -50, 50)
+
+deltaRHistsP <- MakeAllDT(datapp,"deltaR", 0, 100, FALSE)
+deltaRtHistsP <- MakeAllDT(datapp,"deltaRt", 0, 100, FALSE)
+deltaZHistsP <- MakeAllDT(datapp,"zDiffs", -50, 50, FALSE)
 
 # Then plot
 
@@ -135,3 +141,12 @@ panelsRt
 
 panelsZ <- MakeErrPlotFromDT(deltaZHists)
 panelsZ
+
+panelsRP <- MakeErrPlotFromDT(deltaRHistsP)
+panelsRP
+
+panelsRtP <- MakeErrPlotFromDT(deltaRtHistsP)
+panelsRtP
+
+panelsZP <- MakeErrPlotFromDT(deltaZHistsP)
+panelsZP
