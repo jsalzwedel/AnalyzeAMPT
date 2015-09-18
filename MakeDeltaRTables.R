@@ -14,9 +14,12 @@ GetParticles <- function(data, thisPDG, etaMin = -0.8, etaMax = 0.8, rho = 10^2)
 # Find midrapidity lambdas (throw away obvious secondaries)
 lambdas <- GetParticles(ampt, thisPDG = 3122)
 antilambdas <- GetParticles(ampt, thisPDG = -3122)
+
+protons <- GetParticles(ampt, thisPDG = 2212)
+antiprotons <- GetParticles(ampt, thisPDG = -2212)
+
+
 # Now lets make Delta R distributions
-
-
 # For some subset of values, take the difference between each value
 DiffIdentical <- function(vals) {
     diffMatrix <- sapply(vals, function(x) x - vals)
@@ -40,10 +43,6 @@ GetDeltaRTable <- function(data, pairType) {
                      deltaRt, deltaR,
                      pairType, EvType = "Same")
 }
-
-llSame <- GetDeltaRTable(lambdas, "LL")
-aaSame <- GetDeltaRTable(antilambdas, "AA")
-
 
 
 # Try doing this for non-identical particles.  Here, we need to mix between species
@@ -73,9 +72,15 @@ GetDeltaRTableNotID <- function(pairType) {
                      pairType, EvType = "Same")
 }
 
+
+
+llSame <- GetDeltaRTable(lambdas, "LL")
+aaSame <- GetDeltaRTable(antilambdas, "AA")
 laSame <- GetDeltaRTableNotID("LA")
 
-
+ppSame <- GetDeltaRTable(protons, "PP")
+apapSame <- GetDeltaRTable(antiprotons, "ApAp")
+papSame <- GetDeltaRTableNotID("PAp")
 
 
 
@@ -110,8 +115,15 @@ llMix <- DoMixing(lambdas,lambdas, "LL")
 aaMix <- DoMixing(antilambdas,antilambdas, "AA")
 laMix <- DoMixing(lambdas, antilambdas, "LA")
 
+ppMix <- DoMixing(protons,protons, "PP")
+apapMix <- DoMixing(antiprotons, antiprotons, "ApAp")
+papMix  <- DoMixing(protons,antiprotons, "PAp")
+
 combined <- rbind(llSame, aaSame, laSame, llMix, aaMix, laMix)
 write.csv(combined, "DeltaR.csv")
+
+combinedpp <- rbind(ppSame, apapSame, papSame, ppMix, apapMix, papMix)
+write.csv(combinedpp, "DeltaRProts.csv")
 
 # Compute mean, standard deviation, and standard error
 se <- function(x) sqrt(var(x)/length(x))
