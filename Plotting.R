@@ -5,9 +5,6 @@ data <- read.csv("DeltaR.csv", row.names=1)
 library(data.table)
 data <- as.data.table(data)
 
-#stripped <- data[,c("deltaR","pairType", "EvType"), with=FALSE]
-
-
 GetDensityRatio <- function(data, type) {
     data <- data[data$pairType == type]
     sameD <- density(data$deltaR[data$EvType == "Same"], 
@@ -46,14 +43,20 @@ GetErrorBars <- function(hists) {
 ###########
 
 
-MakeHistograms <- function(data, type) {
-    theData <- data[data$pairType == type]
-    histSame<- with(theData, hist(deltaR[EvType == "Same" & deltaR < 100], 
-                  xlim = range(c(0,100)), 
-                  breaks = seq(0,100, by=5)))
-    histMixed<- with(theData, hist(deltaR[EvType == "Mixed" & deltaR < 100], 
-                   xlim = range(c(0,100)), 
-                   breaks = seq(0,100, by=5)))
+MakeHistograms <- function(data, type, colname, rmin, rmax) {
+    data<- data[data$pairType == type]
+    column <- unlist(data[,colname, with=FALSE], use.names=FALSE)
+    histSame<- hist(column[data$EvType == "Same" &
+                               column < rmax & 
+                               column > rmin], 
+                  xlim = range(c(rmin,rmax)), 
+                  breaks = seq(rmin,rmax, by=5))
+    histMixed<- hist(column[data$EvType == "Mixed" & 
+                                column < rmax &
+                                column > rmin], 
+                   xlim = range(c(rmin,rmax)), 
+                   breaks = seq(rmin,rmax, by=5))
+
     histRatio<- histSame
     histRatio$counts <- histSame$counts/histMixed$counts
     histRatio$density <- histSame$density/histMixed$density
@@ -64,9 +67,7 @@ MakeHistograms <- function(data, type) {
     hists
 }
 
-llHists <- MakeHistograms(data, "LL")
-aaHists <- MakeHistograms(data, "AA")
-laHists <- MakeHistograms(data, "LA")
+
 
 MakeHistDataTable <- function(data) {
     dt <- data.table(DeltaR = data$Ratio$mids,
@@ -75,9 +76,20 @@ MakeHistDataTable <- function(data) {
                 Type = data$Type)
 }
 
-histDT <- rbind(MakeHistDataTable(llHists),
-                MakeHistDataTable(aaHists),
-                MakeHistDataTable(laHists))
+MakeAllDT <- function(data, var, rmin, rmax) {   
+    llHists <- MakeHistograms(data, "LL", var, rmin, rmax)
+    aaHists <- MakeHistograms(data, "AA", var, rmin, rmax)
+    laHists <- MakeHistograms(data, "LA", var, rmin, rmax)
+    
+    histDT <- rbind(MakeHistDataTable(llHists),
+                    MakeHistDataTable(aaHists),
+                    MakeHistDataTable(laHists))    
+}
+
+
+deltaRHists <- MakeAllDT(data,"deltaR", 0, 100)
+deltaRtHists <- MakeAllDT(data,"deltaRt", 0, 100)
+deltaZHists <- MakeAllDT(data,"zDiffs", -50, 50)
 
 # Then plot
 
@@ -97,9 +109,9 @@ MakeErrPlot <- function(hists) {
         geom_point()
 }
 
-MakeErrPlot(llHists)
-MakeErrPlot(aaHists)
-MakeErrPlot(laHists)
+#MakeErrPlot(llHists)
+#MakeErrPlot(aaHists)
+#MakeErrPlot(laHists)
 
 # Try plotting these side by side
 
@@ -115,6 +127,11 @@ MakeErrPlotFromDT <- function(histDT) {
         coord_cartesian(ylim = c(0,2))
 }
 
-panels <- MakeErrPlotFromDT(histDT)
+panelsR <- MakeErrPlotFromDT(deltaRHists)
+panelsR
 
+panelsRt <- MakeErrPlotFromDT(deltaRtHists)
+panelsRt
 
+panelsZ <- MakeErrPlotFromDT(deltaZHists)
+panelsZ
