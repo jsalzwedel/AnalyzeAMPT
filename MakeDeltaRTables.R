@@ -34,8 +34,11 @@ GetDeltaRTable <- function(data, pairType) {
     xDiffs <- GetDiffsByEventForColumn(data,data$X)
     yDiffs <- GetDiffsByEventForColumn(data,data$Y)
     zDiffs <- GetDiffsByEventForColumn(data,data$Z)
+    deltaRt <- sqrt(xDiffs^2 + yDiffs^2)
     deltaR <- sqrt(xDiffs^2 + yDiffs^2 + zDiffs^2)
-    dt <- data.table(xDiffs,yDiffs,zDiffs, deltaR, pairType, EvType = "Same")
+    dt <- data.table(xDiffs,yDiffs,zDiffs,
+                     deltaRt, deltaR,
+                     pairType, EvType = "Same")
 }
 
 llSame <- GetDeltaRTable(lambdas, "LL")
@@ -63,8 +66,11 @@ GetDeltaRTableNotID <- function(pairType) {
                                            antilambdas, antilambdas$Y)
     zDiffs <- GetDiffsByEventForColumnNotID(lambdas, lambdas$Z, 
                                            antilambdas, antilambdas$Z)
+    deltaRt <- sqrt(xDiffs^2 + yDiffs^2)
     deltaR <- sqrt(xDiffs^2 + yDiffs^2 + zDiffs^2)
-    dt <- data.table(xDiffs,yDiffs,zDiffs, deltaR, pairType, EvType = "Same")
+    dt <- data.table(xDiffs,yDiffs,zDiffs,
+                     deltaRt, deltaR,
+                     pairType, EvType = "Same")
 }
 
 laSame <- GetDeltaRTableNotID("LA")
@@ -93,8 +99,11 @@ DoMixing <- function(data1, data2, pairType) {
     xDiffs <- GetDiffsMixedEvent(data1, data1$X, data2, data2$X)
     yDiffs <- GetDiffsMixedEvent(data1, data1$Y, data2, data2$Y)
     zDiffs <- GetDiffsMixedEvent(data1, data1$Z, data2, data2$Z)
+    deltaRt <- sqrt(xDiffs^2 + yDiffs^2)
     deltaR <- sqrt(xDiffs^2 + yDiffs^2 + zDiffs^2)
-    dframe <- data.table(xDiffs,yDiffs,zDiffs, deltaR, pairType, EvType = "Mixed")
+    dframe <- data.table(xDiffs,yDiffs,zDiffs, 
+                         deltaRt, deltaR,
+                         pairType, EvType = "Mixed")
 }
 
 llMix <- DoMixing(lambdas,lambdas, "LL")
@@ -109,8 +118,11 @@ se <- function(x) sqrt(var(x)/length(x))
 
 MakeResultsTable <- function(data) {
     results <- data.table(MeanDeltaR = mean(data$deltaR),
-                          StdErr = se(data$deltaR),
-                          Std = sd(data$deltaR),
+                          StdErrR = se(data$deltaR),
+                          StdR = sd(data$deltaR),
+                          MeanDeltaRt = mean(data$deltaRt),
+                          StdErrRt = se(data$deltaRt),
+                          StdRt = sd(data$deltaRt),
                           PairType = data$pairType[1],
                           EvType = data$EvType[1]
                           )
