@@ -4,24 +4,24 @@ data <- as.data.table(read.csv("DeltaR.csv", row.names=1))
 
 datapp <- as.data.table(read.csv("DeltaRProts.csv", row.names=1))
 
-GetDensityRatio <- function(data, type) {
-    data <- data[data$pairType == type]
-    sameD <- density(data$deltaR[data$EvType == "Same"], 
-                     from= 0, to = 100, adjust = 2)
-    mixD <- density(data$deltaR[data$EvType == "Mixed"],
-                     from= 0, to = 100, adjust = 2)
-    ratio <- sameD$y/mixD$y
-    ratioD <- mixD
-    ratioD$y <- ratio
-    
-    list(Same = sameD, Mix = mixD, Ratio = ratioD)
-}
-
-laD <- GetDensityRatio(data, "LA")
-llD <- GetDensityRatio(data, "LL")
-aaD <- GetDensityRatio(data, "AA")
-
-plot(aaD$Ratio)
+# GetDensityRatio <- function(data, type) {
+#     data <- data[data$pairType == type]
+#     sameD <- density(data$zDiffs[data$EvType == "Same"], 
+#                      from= 0, to = 100, adjust = 2)
+#     mixD <- density(data$zDiffs[data$EvType == "Mixed"],
+#                      from= 0, to = 100, adjust = 2)
+#     ratio <- sameD$y/mixD$y
+#     ratioD <- mixD
+#     ratioD$y <- ratio
+#     
+#     list(Same = sameD, Mix = mixD, Ratio = ratioD)
+# }
+# 
+# laD <- GetDensityRatio(data, "LA")
+# llD <- GetDensityRatio(data, "LL")
+# aaD <- GetDensityRatio(data, "AA")
+# 
+# plot(aaD$Ratio)
 
 # Now write a function that calculates error bars
 
@@ -92,11 +92,12 @@ MakeAllDT <- function(data, var, rmin, rmax, isLL=TRUE) {
 deltaRHists <- MakeAllDT(data,"deltaR", 0, 100)
 deltaRtHists <- MakeAllDT(data,"deltaRt", 0, 100)
 deltaZHists <- MakeAllDT(data,"zDiffs", -50, 50)
+deltaTHists <- MakeAllDT(data,"tDiffs", -50, 50)
 
 deltaRHistsP <- MakeAllDT(datapp,"deltaR", 0, 100, FALSE)
 deltaRtHistsP <- MakeAllDT(datapp,"deltaRt", 0, 100, FALSE)
 deltaZHistsP <- MakeAllDT(datapp,"zDiffs", -50, 50, FALSE)
-
+deltaTHistsP <- MakeAllDT(datapp,"tDiffs", -50, 50, FALSE)
 # Then plot
 
 library(Hmisc) # Used for errbar function
@@ -142,6 +143,9 @@ panelsRt
 panelsZ <- MakeErrPlotFromDT(deltaZHists)
 panelsZ
 
+panelsT <- MakeErrPlotFromDT(deltaTHists)
+panelsT
+
 panelsRP <- MakeErrPlotFromDT(deltaRHistsP)
 panelsRP
 
@@ -150,3 +154,7 @@ panelsRtP
 
 panelsZP <- MakeErrPlotFromDT(deltaZHistsP)
 panelsZP
+
+panelsTP <- MakeErrPlotFromDT(deltaTHistsP)
+panelsTP
+

@@ -37,9 +37,10 @@ GetDeltaRTable <- function(data, pairType) {
     xDiffs <- GetDiffsByEventForColumn(data,data$X)
     yDiffs <- GetDiffsByEventForColumn(data,data$Y)
     zDiffs <- GetDiffsByEventForColumn(data,data$Z)
+    tDiffs <- GetDiffsByEventForColumn(data,data$T)
     deltaRt <- sqrt(xDiffs^2 + yDiffs^2)
     deltaR <- sqrt(xDiffs^2 + yDiffs^2 + zDiffs^2)
-    dt <- data.table(xDiffs,yDiffs,zDiffs,
+    dt <- data.table(xDiffs, yDiffs, zDiffs, tDiffs,
                      deltaRt, deltaR,
                      pairType, EvType = "Same")
 }
@@ -58,16 +59,18 @@ GetDiffsByEventForColumnNotID <- function(data, column, data2, data2column) {
     diffsCombined <- unlist(splitDataDiffs, use.names=FALSE)
 }
 
-GetDeltaRTableNotID <- function(pairType) {
-    xDiffs <- GetDiffsByEventForColumnNotID(lambdas, lambdas$X, 
-                                           antilambdas, antilambdas$X)
-    yDiffs <- GetDiffsByEventForColumnNotID(lambdas, lambdas$Y, 
-                                           antilambdas, antilambdas$Y)
-    zDiffs <- GetDiffsByEventForColumnNotID(lambdas, lambdas$Z, 
-                                           antilambdas, antilambdas$Z)
+GetDeltaRTableNotID <- function(data1, data2, pairType) {
+    xDiffs <- GetDiffsByEventForColumnNotID(data1, data1$X, 
+                                           data2, data2$X)
+    yDiffs <- GetDiffsByEventForColumnNotID(data1, data1$Y, 
+                                           data2, data2$Y)
+    zDiffs <- GetDiffsByEventForColumnNotID(data1, data1$Z, 
+                                           data2, data2$Z)
+    tDiffs <- GetDiffsByEventForColumnNotID(data1, data1$T, 
+                                            data2, data2$T)
     deltaRt <- sqrt(xDiffs^2 + yDiffs^2)
     deltaR <- sqrt(xDiffs^2 + yDiffs^2 + zDiffs^2)
-    dt <- data.table(xDiffs,yDiffs,zDiffs,
+    dt <- data.table(xDiffs, yDiffs, zDiffs, tDiffs,
                      deltaRt, deltaR,
                      pairType, EvType = "Same")
 }
@@ -76,11 +79,11 @@ GetDeltaRTableNotID <- function(pairType) {
 
 llSame <- GetDeltaRTable(lambdas, "LL")
 aaSame <- GetDeltaRTable(antilambdas, "AA")
-laSame <- GetDeltaRTableNotID("LA")
+laSame <- GetDeltaRTableNotID(lambdas, antilambdas, "LA")
 
 ppSame <- GetDeltaRTable(protons, "PP")
 apapSame <- GetDeltaRTable(antiprotons, "ApAp")
-papSame <- GetDeltaRTableNotID("PAp")
+papSame <- GetDeltaRTableNotID(protons, antiprotons, "PAp")
 
 
 
@@ -104,9 +107,10 @@ DoMixing <- function(data1, data2, pairType) {
     xDiffs <- GetDiffsMixedEvent(data1, data1$X, data2, data2$X)
     yDiffs <- GetDiffsMixedEvent(data1, data1$Y, data2, data2$Y)
     zDiffs <- GetDiffsMixedEvent(data1, data1$Z, data2, data2$Z)
+    tDiffs <- GetDiffsMixedEvent(data1, data1$T, data2, data2$T)
     deltaRt <- sqrt(xDiffs^2 + yDiffs^2)
     deltaR <- sqrt(xDiffs^2 + yDiffs^2 + zDiffs^2)
-    dframe <- data.table(xDiffs,yDiffs,zDiffs, 
+    dframe <- data.table(xDiffs, yDiffs, zDiffs, tDiffs,
                          deltaRt, deltaR,
                          pairType, EvType = "Mixed")
 }
@@ -121,9 +125,11 @@ papMix  <- DoMixing(protons,antiprotons, "PAp")
 
 combined <- rbind(llSame, aaSame, laSame, llMix, aaMix, laMix)
 write.csv(combined, "DeltaR.csv")
+rm(llSame, aaSame, laSame, llMix, aaMix, laMix)
 
 combinedpp <- rbind(ppSame, apapSame, papSame, ppMix, apapMix, papMix)
 write.csv(combinedpp, "DeltaRProts.csv")
+rm(ppSame, apapSame, papSame, ppMix, apapMix, papMix)
 
 # Compute mean, standard deviation, and standard error
 se <- function(x) sqrt(var(x)/length(x))
